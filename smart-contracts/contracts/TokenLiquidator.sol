@@ -13,7 +13,11 @@ contract TokenLiquidator {
     address private constant UNISWAP_V2_FACTORY =
         0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
 
+    // Mainnet
     address private constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+
+    // Ropsten
+    // address private constant WETH = 0xc778417E063141139Fce010982780140Aa0cD5Ab;
 
     IUniswapV2Router02 public uniswapV2Router =
         IUniswapV2Router02(UNISWAP_V2_ROUTER);
@@ -72,7 +76,7 @@ contract TokenLiquidator {
             _amountOutMin,
             path,
             address(this),
-            block.timestamp
+            block.timestamp + 3600 * 2
         );
 
         return amounts;
@@ -97,7 +101,7 @@ contract TokenLiquidator {
                 1,
                 1,
                 _to,
-                block.timestamp
+                block.timestamp + 3600 * 2
             );
 
         emit AddedLiquidity(amountA, amountB, liquidity);
