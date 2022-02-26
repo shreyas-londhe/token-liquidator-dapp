@@ -1,5 +1,5 @@
 import type { NextPage } from 'next'
-import { ethers } from 'ethers'
+import { BigNumber, ethers } from 'ethers'
 import { useState, useEffect } from 'react'
 
 import contractAbi from './utils/ContractABI.json'
@@ -57,70 +57,80 @@ const Home: NextPage = () => {
     }
   }
 
-  const approveToken = async () => {
-    if (!isApproved) {
-      try {
-        const { ethereum } = window
-        if (ethereum) {
-          const provider = new ethers.providers.Web3Provider(ethereum)
-          const signer = provider.getSigner()
-          const DAIContract = new ethers.Contract(DAI, ERC20Abi.abi, signer)
+  // const approveToken = async () => {
+  //   if (!isApproved) {
+  //     try {
+  //       const { ethereum } = window
+  //       if (ethereum) {
+  //         const provider = new ethers.providers.Web3Provider(ethereum)
+  //         const signer = provider.getSigner()
+  //         const tokenContract = new ethers.Contract(WETH, ERC20Abi.abi, signer)
 
-          const approveDaiTxn = await DAIContract.approve(
-            CONTRACT_ADDRESS,
-            tokenAmount
-          )
-          const tx = await approveDaiTxn.wait()
-          if (tx.status === 1) {
-            alert(`Approved ${tokenAmount} DAI`)
-            setIsApproved(true)
-          } else {
-            alert('Something went wrong')
-          }
-        }
-      } catch (error) {
-        console.log(error)
-      }
-    }
-  }
+  //         const approveTokenTxn = await tokenContract.approve(
+  //           CONTRACT_ADDRESS,
+  //           ethers.utils.parseEther(tokenAmount.toString())
+  //         )
+  //         const tx = await approveTokenTxn.wait()
+  //         if (tx.status === 1) {
+  //           alert(`Approved ${tokenAmount} token`)
+  //           setIsApproved(true)
+  //         } else {
+  //           alert('Something went wrong')
+  //         }
+  //       }
+  //     } catch (error) {
+  //       console.log(error)
+  //     }
+  //   }
+  // }
 
   const addLiquidity = async () => {
-    if (isApproved) {
-      try {
-        const { ethereum } = window
-        if (ethereum) {
-          const provider = new ethers.providers.Web3Provider(ethereum)
-          const signer = provider.getSigner()
-          const TokenLiquidatorContract = new ethers.Contract(
-            CONTRACT_ADDRESS,
-            contractAbi.abi,
-            signer
-          )
+    try {
+      const { ethereum } = window
+      if (ethereum) {
+        const provider = new ethers.providers.Web3Provider(ethereum)
+        const signer = provider.getSigner()
+        const tokenContract = new ethers.Contract(WETH, ERC20Abi.abi, signer)
+        const TokenLiquidatorContract = new ethers.Contract(
+          CONTRACT_ADDRESS,
+          contractAbi.abi,
+          signer
+        )
 
-          const provideLiquidityTxn =
-            await TokenLiquidatorContract.provideLiquidity(
-              DAI,
-              WETH,
-              tokenAmount,
-              { gasLimit: 8000000 }
-            )
-          const tx = await provideLiquidityTxn.wait()
-
-          if (tx.status === 1) {
-            const pair = await TokenLiquidatorContract.getPairAddress(DAI, WETH)
-            const liquidity = await TokenLiquidatorContract.getLiquidity(
-              pair,
-              currentAccount
-            )
-            alert(`Added ${liquidity} LP Tokens`)
-            setIsApproved(false)
-          } else {
-            alert('Something went wrong')
-          }
+        const approveTokenTxn = await tokenContract.approve(
+          CONTRACT_ADDRESS,
+          ethers.utils.parseEther(tokenAmount.toString())
+        )
+        let tx = await approveTokenTxn.wait()
+        if (tx.status === 1) {
+          alert(`Approved ${tokenAmount} token`)
+          setIsApproved(true)
+        } else {
+          alert('Something went wrong')
         }
-      } catch (error) {
-        console.log(error)
+
+        const provideLiquidityTxn =
+          await TokenLiquidatorContract.provideLiquidity(
+            WETH,
+            DAI,
+            ethers.utils.parseEther(tokenAmount.toString())
+          )
+        tx = await provideLiquidityTxn.wait()
+
+        if (tx.status === 1) {
+          const pair = await TokenLiquidatorContract.getPairAddress(WETH, DAI)
+          const liquidity = await TokenLiquidatorContract.getLiquidity(
+            pair,
+            currentAccount
+          )
+          alert(`Added ${liquidity} LP Tokens`)
+          setIsApproved(false)
+        } else {
+          alert('Something went wrong')
+        }
       }
+    } catch (error) {
+      console.log(error)
     }
   }
 
@@ -145,23 +155,24 @@ const Home: NextPage = () => {
         <div>
           <div className="flex flex-col items-center justify-center p-2 m-2 ">
             <label className="p-2 mt-2 mb-1" htmlFor="tokenAAmount">
-              Amount of DAI to Add to DAI/WETH Pool
+              Amount of WETH to Add to WETH/DAI Pool
             </label>
             <input
               className="p-2 mt-1 mb-2 bg-gray-100 rounded-md"
               type="number"
+              step={0.01}
               name="tokenAAmount"
               id="tokenAAmount"
-              onChange={(e) => setTokenAmount(parseInt(e.target.value))}
+              onChange={(e) => setTokenAmount(parseFloat(e.target.value))}
             />
 
-            <button
+            {/* <button
               onClick={approveToken}
               disabled={tokenAmount === 0 || isApproved}
               className="px-4 py-2 m-2 font-bold text-white bg-green-500 rounded hover:bg-green-700"
             >
               Approve Tokens
-            </button>
+            </button> */}
             <button
               onClick={addLiquidity}
               className="px-4 py-2 m-2 font-bold text-white bg-purple-500 rounded hover:bg-purple-700"
